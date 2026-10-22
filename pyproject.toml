@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "robo-test-studio-docs"
+version = "0.1.0"
+package-mode = false
+description = "Public documentation for robo-test-studio"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+mkdocs = "^1.6.1"
+mkdocs-material = "^9.7.7"
+mkdocstrings = {version = "^1.0.6", extras = ["python"]}
+robo-appian = ">=0.1.35,<0.2"
+robo-automation = ">=0.1.19,<0.2"
