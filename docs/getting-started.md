@@ -1,22 +1,19 @@
 # Get started with RoboTest Studio
 
-RoboTest Studio provides the visual interface. The `robo-recorder` consumer
-project stores your configuration, recordings and generated tests. Studio
-currently supports approved Appian component mappings; support for other web
-applications requires additional adapters.
+RoboTest Studio lets you record, review and execute supported Appian workflows.
+Ask your project owner to prepare the test environment and application access.
+Support for other web applications depends on available adapters.
 
-## Set up the workspace
+## Open Studio
 
-An engineer provisions Python 3.12 and the project dependencies once. From the
-`robo-recorder` consumer directory:
+From your prepared test project, run:
 
-```powershell
-python scripts/setup.py --browser chromium
+```shell
 poetry run appian ui
 ```
 
-The command opens a local Studio page. This documentation site does not run your
-tests or store recordings. The recorder browser is always visible.
+Studio opens locally. This documentation site does not run tests or store recordings.
+Recording always opens a visible browser. Use the project settings supplied by your team.
 
 ## Record
 
@@ -27,11 +24,10 @@ Recording captures interactions; it does not infer expected business outcomes.
 
 ## Review
 
-Open the testcase in Studio. Check the semantic targets and input values. Add
+Open the testcase in Studio. Check the selected controls and input values. Add
 explicit verifications for the results the application must produce. Correct
 ambiguous targets and remove unwanted steps. Approve the reviewed step contents.
-Approving actions alone does not supply a missing verification. Unsupported
-controls need an engineer-maintained mapping.
+Approving actions alone does not supply a missing verification. Ask your automation support team about unsupported controls.
 
 ## Execute
 

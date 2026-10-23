@@ -1,34 +1,34 @@
 # Execute and inspect tests
 
-Use Studio's Testcases view to select a recording, review readiness checks and
-execute its approved testcase. Existing execution uses pytest and the public
-RoboAppian page fixture. Browser resources are isolated per testcase according
-to the consumer fixture policy; authentication is not saved or reused.
-
 ## Before a run
 
-Resolve blocked mappings, approve explicit verifications, confirm test data and
-confirm the entry page. Studio checks browser availability and generated source
-before launching. The UI regenerates the approved source so an outdated export
-is not silently executed. Applications requiring authentication need an
-engineer-configured consumer policy or an approved recorded entry flow.
+1. Select the saved testcase in **Testcases**.
+2. Review its steps, inputs and expected results.
+3. Resolve blocked selections and approve at least one explicit verification.
+4. Select **Generate Python** to prepare the executable test; no code editing is required.
+5. Open **Executions**, choose the testcase and review the run settings.
+6. Confirm the test data and starting-page requirements using both confirmation checkboxes.
+7. Select **Check readiness**, resolve the reported issues, then select **Run testcase**.
 
-## Execution settings
+Readiness checks do not prove your business data is valid or that you are signed in.
+Each run must reach its required starting page. A direct URL does not bypass sign-in,
+and a recording browser's session is not reused for execution.
 
-`HEAD_LESS` controls test execution; recording and browser review remain visible.
-`WAIT_TIME` is in seconds. Browser maximization, viewport dimensions, log level
-and evidence capture can be configured through supported Studio controls and
-project defaults. Project environment values remain consumer-owned.
+## Choose run settings
 
-Studio shows run status and step events and links available evidence. A completed
-click is an action, not a business verification. Review the asserted expected
-results when interpreting a pass. Failure evidence has independent settings.
+Choose a visible browser to watch the run or headless mode to run without a visible
+window. Choose the permitted wait time, log level and evidence formats before running.
+These execution choices do not change the recording browser. Use **Reset settings
+to project defaults** when you want to return to your team's configuration.
 
-## Engineering handoff
+## Inspect the result
 
-Generated Python uses `robo-appian` public components and pytest. Studio is not
-required to execute an exported testcase. `robo_appian.execution` provides
-optional step telemetry when Studio launches the run. The component library owns
-browser synchronization and execution evidence; Studio owns run orchestration
-and the results UI. See [evidence](evidence.md) and the
-[RoboAppian API documentation](https://dinilmithra.github.io/robo-appian-docs/).
+Select a run in **Execution history**. Review the overall result, individual step
+results, error details and available evidence links. A pass covers the checks you
+approved. Add another verification when an important business outcome is unchecked.
+
+Before rerunning, check whether the previous attempt created or changed business data.
+If the starting page or a control cannot be reached, share the failed step and evidence
+with your automation support team.
+
+See [record and review](guide.md) and [evidence](evidence.md).

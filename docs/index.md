@@ -21,7 +21,7 @@ hide:
         <div class="rts-step"><span class="rts-number">01</span><div><strong>Enter request details</strong><small>Fill the title and select a priority</small></div><span class="rts-type">Action</span></div>
         <div class="rts-step"><span class="rts-number">02</span><div><strong>Submit the request</strong><small>Click Submit</small></div><span class="rts-type">Action</span></div>
         <div class="rts-step verification"><span class="rts-number">03</span><div><strong>Verify the confirmation</strong><small>Expected: “Request submitted” is visible</small></div><span class="rts-type">Verify</span></div>
-        <div class="rts-preview-footer"><span>3 steps · 1 explicit verification</span><a href="guide/#review-an-existing-recording">Review workflow →</a></div>
+        <div class="rts-preview-footer"><span>3 steps · 1 explicit verification</span><a href="guide/#review-the-steps">Review workflow →</a></div>
       </div>
     </div>
   </section>
@@ -36,7 +36,7 @@ hide:
   </section>
   <section class="rts-lower">
     <div class="rts-callout"><span class="rts-kicker">YOUR WORKSPACE, YOUR TESTS</span><h2>Start with a URL.<br>Stay in control.</h2><p>Recording captures actions. You decide what the application should do. Explicit review and verification keep generated tests grounded in your expectations.</p><a href="getting-started/">Set up your workspace →</a></div>
-    <div class="rts-resources"><h2>Find your next step</h2><a href="guide/"><div><strong>Recording and review</strong><span>Mappings, keyboard actions, approvals and export</span></div><b>↗</b></a><a href="execution/"><div><strong>Execution settings</strong><span>Browser mode, timeouts and isolated test runs</span></div><b>↗</b></a><a href="evidence/"><div><strong>Results and evidence</strong><span>HTML, images, metadata and failure capture</span></div><b>↗</b></a><a href="api/"><div><strong>Recorder features</strong><span>Learn how to record, review, approve and run tests</span></div><b>↗</b></a></div>
+    <div class="rts-resources"><h2>Find your next step</h2><a href="guide/"><div><strong>Recording and review</strong><span>Steps, keyboard actions, approvals and export</span></div><b>↗</b></a><a href="execution/"><div><strong>Execution settings</strong><span>Browser mode, timeouts and isolated test runs</span></div><b>↗</b></a><a href="evidence/"><div><strong>Results and evidence</strong><span>HTML, images, metadata and failure capture</span></div><b>↗</b></a><a href="api/"><div><strong>Recorder features</strong><span>Learn how to record, review, approve and run tests</span></div><b>↗</b></a></div>
   </section>
-  <div class="rts-boundary"><strong>Built on RoboAppian.</strong> Studio currently targets supported Appian controls. Unsupported mappings need engineering support. Engineers can build suites directly with <a href="https://dinilmithra.github.io/robo-appian-docs/">RoboAppian’s component APIs ↗</a>.</div>
+  <div class="rts-boundary"><strong>Built on RoboAppian.</strong> Studio currently targets supported Appian controls. Ask your support team about unsupported controls. Engineers can build suites directly with <a href="https://dinilmithra.github.io/robo-appian-docs/">RoboAppian features ↗</a>.</div>
 </div>

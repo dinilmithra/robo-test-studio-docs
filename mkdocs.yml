@@ -33,12 +33,7 @@ theme:
     - search.suggest
 plugins:
   - search
-  - mkdocstrings:
-      handlers:
-        python:
-          paths: [.]
-          options:
-            show_source: false
+
 nav:
   - Home: index.md
   - Get Started: getting-started.md
