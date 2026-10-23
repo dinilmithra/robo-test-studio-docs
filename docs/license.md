@@ -1,9 +1,6 @@
 # License
 
-RoboTest Studio is released under the **MIT License**.
-
-The repository [LICENSE](https://github.com/dinilmithra/robo-test-studio-docs/blob/main/LICENSE)
-is authoritative. Third-party dependencies retain their own licenses.
+RoboTest Studio is released under the **MIT License**. Third-party dependencies retain their own licenses.
 
 ```text
 MIT License

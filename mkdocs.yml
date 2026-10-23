@@ -1,7 +1,6 @@
 site_name: RoboTest Studio
 site_description: Visual Appian test authoring, review and execution for business users.
 site_url: https://dinilmithra.github.io/robo-test-studio-docs/
-repo_url: https://github.com/dinilmithra/robo-test-studio-docs
 copyright: Copyright &copy; 2026 Dinil Mithra
 extra_css:
   - stylesheets/studio.css
