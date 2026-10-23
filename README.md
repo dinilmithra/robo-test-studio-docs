@@ -7,9 +7,9 @@ pages describe how to use published libraries; implementation source is hidden.
 
 ## Local setup
 
-Use Python 3.12. Run `python setup.py --help` to see all options.
-`python setup.py --build` creates the Poetry environment, installs documentation
-dependencies and builds with strict checks. `python setup.py --serve` starts
+Use Python 3.12. Run `python scripts/setup.py --help` to see all options.
+`python scripts/setup.py --build` creates the Poetry environment, installs documentation
+dependencies and builds with strict checks. `python scripts/setup.py --serve` starts
 a local preview; optionally set `--dev-addr 127.0.0.1:8001`.
 Poetry installs provider packages from PyPI, without private source checkouts.
 Commit the generated `poetry.lock` after the first successful dependency resolution.

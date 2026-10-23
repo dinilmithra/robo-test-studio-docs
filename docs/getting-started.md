@@ -12,7 +12,7 @@ An engineer provisions Python 3.12 and the project dependencies once. From the
 
 ```powershell
 python scripts/setup.py --browser chromium
-poetry run robo-test-studio ui
+poetry run appian ui
 ```
 
 The command opens a local Studio page. This documentation site does not run your
