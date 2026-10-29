@@ -248,11 +248,37 @@ def shared_poetry_lock(root, timeout=360):
 
 def _poetry_python(target=None, *, require_ready=True):
     root = shared_poetry_root()
-    if require_ready and not (root / '.ready').is_file():
-        return None
-    candidates = [python_in(root)]
+    ready = (root / '.ready').is_file()
+    candidates = [python_in(root)] if ready or not require_ready else []
+    if require_ready:
+        candidates.extend([Path(sys.executable), Path(getattr(sys, '_base_executable', sys.executable))])
+        executable = shutil.which('poetry')
+        if executable:
+            executable = Path(executable).resolve()
+            candidates.extend([
+                python_in(executable.parent.parent),
+                executable.parent / Path(sys.executable).name,
+                executable.parent.parent / Path(sys.executable).name,
+            ])
+            poetry_home = os.environ.get('POETRY_HOME')
+            if poetry_home:
+                candidates.append(python_in(Path(poetry_home).expanduser() / 'venv'))
+            if os.name == 'nt':
+                data_home = Path(os.environ.get('APPDATA', Path.home() / 'AppData' / 'Roaming'))
+            elif sys.platform == 'darwin':
+                data_home = Path.home() / 'Library' / 'Application Support'
+            else:
+                data_home = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local' / 'share'))
+            candidates.append(python_in(data_home / 'pypoetry' / 'venv'))
     seen = set()
     for candidate in candidates:
+        candidate = candidate.absolute()
+        if any(part in ('.venv', '.venv-core') for part in candidate.parts):
+            continue
+        if target is not None and candidate.is_relative_to(Path(target).absolute()):
+            continue
+        if require_ready and not ready and candidate.is_relative_to(root.absolute()):
+            continue
         if not candidate.is_file() or str(candidate) in seen:
             continue
         seen.add(str(candidate))
