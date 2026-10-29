@@ -183,7 +183,7 @@ def run(command, project, env, *, capture=False):
             "Poetry tooling installation exceeded 300 seconds and was stopped. "
             "Check access to your configured Python package index, proxy and certificate settings. "
             "If your index requires credentials, configure approved non-interactive credentials "
-            "before rerunning python scripts/setup.py. TLS verification remains enabled."
+            "before rerunning python tools/setup.py. TLS verification remains enabled."
         ) from exc
     finally:
         finished.set()
@@ -420,7 +420,7 @@ import sys
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog=globals().get("_SETUP_PROG"), description="Set up public documentation with Python 3.12 and Poetry 2.5.1.")
+    parser = argparse.ArgumentParser(prog=globals().get("_SETUP_PROG", str(Path(__file__).resolve())), description="Set up public documentation with Python 3.12 and Poetry 2.5.1.")
     actions = parser.add_mutually_exclusive_group()
     actions.add_argument("--build", action="store_true", help="Build the site with strict MkDocs checks after installation.")
     actions.add_argument("--serve", action="store_true", help="Start a local preview after installation.")

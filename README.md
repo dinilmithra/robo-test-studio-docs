@@ -7,9 +7,9 @@ pages describe how to use published libraries; implementation source is hidden.
 
 ## Local setup
 
-Use Python 3.12. Run `python scripts/setup.py --help` to see all options.
-`python scripts/setup.py --build` creates the Poetry environment, installs documentation
-dependencies and builds with strict checks. `python scripts/setup.py --serve` starts
+Use Python 3.12. Run `python tools/setup.py --help` to see all options.
+`python tools/setup.py --build` creates the Poetry environment, installs documentation
+dependencies and builds with strict checks. `python tools/setup.py --serve` starts
 a local preview; optionally set `--dev-addr 127.0.0.1:8001`.
 Poetry installs provider packages from PyPI, without private source checkouts.
 Commit the generated `poetry.lock` after the first successful dependency resolution.
@@ -56,7 +56,7 @@ workflow; trigger a new run in the public docs repository instead.
 
 ## Setup security updates
 
-Run `python scripts/setup.py` with Python 3.12 to secure the project environment.
+Run `python tools/setup.py` with Python 3.12 to secure the project environment.
 Setup verifies pip is at least 26.2.2, upgrading older pip through the official
 SHA256-pinned wheel before downloading Poetry. Newer stable pip is preserved.
 Poetry 2.5.1 tooling requires certifi>=2026.10.19. Existing external Poetry tools
@@ -76,4 +76,4 @@ Publish feature usage, user steps and troubleshooting only. Keep source, API inv
 
 ## Standalone setup
 
-Environment creation, secure tooling bootstrap and Poetry validation are included in the project setup implementation. Run `python scripts/setup.py --help`; a separate environment helper module is not required. Project setup options and existing environment names are preserved.
+Environment creation, secure tooling bootstrap and Poetry validation are included in the project setup implementation. Run `python tools/setup.py --help`; a separate environment helper module is not required. Project setup options and existing environment names are preserved.
