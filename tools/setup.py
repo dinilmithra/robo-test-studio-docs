@@ -353,16 +353,17 @@ def ensure_shared_poetry(project, *, bootstrap=True, timeout=30):
 
 @contextmanager
 def managed_environment(project, directory=".venv", *, bootstrap=True, timeout=30):
-    """Select/create one Poetry-owned environment and reject foreign targets.
+    """Select and verify the exact project environment, never a cached fallback.
 
-    CORE retains its .venv-core name using Poetry 2.5.1's environment builder;
-    ordinary projects use the public `poetry env use` command. Poetry then owns
-    every dependency operation in the selected environment.
+    Existing project environments are reused. Missing ones are created at the
+    explicit target with the pinned Poetry 2.5.1 environment builder. A foreign
+    active environment or cached Poetry association cannot redirect operations.
     """
     project = Path(project).resolve()
     target = project / directory
     python = python_in(target)
-    if target.exists() and (
+    existed = target.exists()
+    if existed and (
         not python.is_file() or not (target / "pyvenv.cfg").is_file()
     ):
         raise RuntimeError(f"Incomplete environment: {target}. Repair it before setup.")
@@ -370,40 +371,33 @@ def managed_environment(project, directory=".venv", *, bootstrap=True, timeout=3
     command = [str(tool_python), "-m", "poetry", "--no-interaction"]
     env = clean_environment()
     env["POETRY_VIRTUALENVS_CREATE"] = "true"
-    env["POETRY_VIRTUALENVS_IN_PROJECT"] = "true"
+    env["POETRY_VIRTUALENVS_IN_PROJECT"] = "true" if directory == ".venv" else "false"
     env["POETRY_VIRTUALENVS_OPTIONS_NO_PIP"] = "false"
-    if directory == ".venv":
-        chosen = python if python.exists() else Path(getattr(sys, "_base_executable", sys.executable))
-        run([*command, "env", "use", str(chosen)], project, env)
-    elif not target.exists():
+    if not existed:
         builder = (
             "from pathlib import Path; import sys; "
             "from poetry.utils.env import EnvManager; "
             "EnvManager.build_venv(Path(sys.argv[1]), "
             "executable=Path(sys.argv[2]), with_pip=True)"
         )
-        run(
-            [
-                str(tool_python),
-                "-c",
-                builder,
-                str(target),
-                str(getattr(sys, "_base_executable", sys.executable)),
-            ],
-            project,
-            env,
-        )
+        run([str(tool_python), "-c", builder, str(target),
+             str(getattr(sys, "_base_executable", sys.executable))], project, env)
     if not python.is_file():
         raise RuntimeError(f"Poetry did not create the expected interpreter: {python}")
     run([str(python), "-c",
-         "import sys; assert sys.version_info[:2] == (3,12), 'Project environment requires Python 3.12'"], project, env)
+         "import sys; from pathlib import Path; "
+         "assert sys.version_info[:2] == (3,12), 'Project environment requires Python 3.12'; "
+         "assert Path(sys.prefix).resolve() == Path(sys.argv[1]).resolve(), 'Interpreter belongs to a different environment'",
+         str(target)], project, env)
     env["VIRTUAL_ENV"] = str(target)
     env["PATH"] = str(python.parent) + os.pathsep + env.get("PATH", "")
     env["POETRY_VIRTUALENVS_CREATE"] = "false"
-    env["POETRY_VIRTUALENVS_IN_PROJECT"] = "true" if directory == ".venv" else "false"
     selected = run([*command, "env", "info", "--path"], project, env, capture=True).stdout.strip()
     if Path(selected).resolve() != target.resolve():
         raise RuntimeError(f"Poetry selected {selected!r}; expected {target}. No packages were installed.")
+    print(f"Project environment: {target} ({'reused' if existed else 'created'})", flush=True)
+    print(f"Project interpreter: {python}", flush=True)
+    print(f"Poetry tooling: {tool_python}", flush=True)
     yield python, command, env
 
 
