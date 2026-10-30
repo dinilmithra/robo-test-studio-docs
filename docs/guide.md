@@ -1,43 +1,48 @@
-# Record and review a testcase
+# Robo Appian Recorder
 
-## Prepare
+A new library for capturing Appian interactions and translating them into reviewed
+semantic operations. No implementation from the former Studio recorder is reused.
 
-Open Studio in your consumer project. Enter the application URL and confirm the
-testcase name and Recording ID. Choose the recording timeout and diagnostic
-settings. Recording uses a visible browser. Use approved test data.
+Dependency direction: `core-recorder -> robo-test-studio -> robo-appian-recorder -> robo-appian`.
 
-## Record the workflow
+Public contract:
 
-Open the application. If recording starts paused, sign in and select Start
-recording on the intended entry page. To include a landing-page warning or
-navigation action, enable recording from page load before opening the browser.
-Pause for sensitive credential entry, then resume. Record the business actions
-in order. Use the panel to pause, resume or save the draft.
+- `translate(event, sequence)` returns a semantic step and optional data binding.
+- `validate(document, approved=False)` reports unsupported targets and missing checks.
+- `fingerprint(document)` identifies a definition independently of its approval stamp.
+- `replay(page, document, data, timeout=90, report=None)` executes public `robo-appian`
+  component calls. It requires an approved definition and all bound data columns.
 
-## Add a verification
+Only the recording adapter (`browser.py`, `capture.js`) uses raw browser APIs.
+Regression replay uses public `robo-appian` APIs; consumer tests never import Playwright.
+Each recording launches a separate, non-persistent context. Regression inherits the
+consumer's function-scoped Appian fixture; credentials and sessions are not shared.
 
-Choose an observable result required by the testcase, such as a visible request
-identifier, expected field value or status. Add a verification and review its
-expected result. Recording an action does not establish the expected outcome.
-At least one explicit approved verification is needed before generation.
+## Recording
 
-## Review the steps
+Studio launches the worker with an explicit consumer output location. In its browser,
+complete login while capture is paused, then click **Start capture**. Pause before
+logout or other operations outside the scenario. Use **Pick visible check** to record
+an explicit expected component. Stop from Studio to flush the active field and save.
 
-Open the recording in Studio. Review each action, target, input and verification.
-Edit incorrect values or mappings, add missing supported steps and remove
-unwanted steps. Resolve ambiguity before approval. Approve individual steps or
-use Approve all after reviewing every step. Editing step content requires review
-and approval again. Save the recording.
+The initial adapter supports labeled text/date inputs, checkbox/radio selection,
+Appian dropdown option events, named buttons/links/tabs and explicit visible checks.
+Date replay immediately blurs after fill. Inputs are parameterized rather than
+embedded as Python literals.
 
-## Validate and generate
+## Deliberate limits
 
-Validate the recording. Resolve every blocker, including unsupported mappings,
-unapproved edits and missing verification. Generate the approved testcase, then
-follow [execution](execution.md). Validation confirms supported structure and
-approval; it does not prove that the application will satisfy the testcase.
+This is a new implementation requiring validation on representative Appian screens.
+Complex picker search/result flows, calendar navigation, nested menus, keyboard-only
+submissions, ARIA-only controls, uploads, cross-frame/popup workflows and ambiguous
+labels are not automatically reconstructed. They require a verified mapping or
+extension before approval. Grid actions are blocked until explicit semantic grid,
+row-key and column mappings are supplied. No nth(), generated ID or raw selector
+fallback is used in saved tests.
 
-## When a control is unsupported
+A recording is not a video or full replay of every browser event. Assertions must
+be selected or added by the user. Password/secret values are excluded. Do not record
+login credentials or authentication tokens as business data.
 
-Keep the draft and provide the relevant step and evidence to your automation
-engineer. An approved component mapping may be required. Do not replace a missing
-business expectation with a guessed result to pass validation.
+MCP and LLM access are not required. An optional future MCP adapter can delegate to
+`robo-appian`; it should not own Appian execution logic.

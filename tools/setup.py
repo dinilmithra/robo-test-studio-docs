@@ -1,4 +1,6 @@
-"""Poetry environment setup and local documentation preview."""
+"""Create and validate the robo-appian local Python development environment."""
+
+from __future__ import annotations
 
 # Standalone Poetry environment support (kept identical across project setup scripts).
 from contextlib import contextmanager
@@ -11,6 +13,7 @@ import tempfile
 import venv
 import re
 import tomllib
+import json
 import threading
 import time
 
@@ -273,6 +276,14 @@ def _poetry_python(target=None, *, require_ready=True):
     seen = set()
     for candidate in candidates:
         candidate = candidate.absolute()
+        active_roots = []
+        if os.environ.get('VIRTUAL_ENV'):
+            active_roots.append(Path(os.environ['VIRTUAL_ENV']).resolve())
+        if sys.prefix != sys.base_prefix:
+            active_roots.append(Path(sys.prefix).resolve())
+        if (any(candidate.resolve().is_relative_to(active) for active in active_roots)
+                and not candidate.resolve().is_relative_to(root.resolve())):
+            continue
         if any(part in ('.venv', '.venv-core') for part in candidate.parts):
             continue
         if target is not None and candidate.is_relative_to(Path(target).absolute()):
@@ -312,7 +323,7 @@ def ensure_shared_poetry(project, *, bootstrap=True, timeout=30):
         return tool_python
     if not bootstrap:
         raise RuntimeError(
-            f"Poetry {POETRY_VERSION} with certifi>=2026.10.19 is required. Run the project setup script first (Appian: --bootstrap-poetry)."
+            f"Poetry {POETRY_VERSION} with certifi>=2026.10.19 is required. Run python tools/setup.py --bootstrap-poetry to provision it."
         )
     with shared_poetry_lock(root):
         tool_python = _poetry_python()
@@ -352,7 +363,7 @@ def ensure_shared_poetry(project, *, bootstrap=True, timeout=30):
 
 
 @contextmanager
-def managed_environment(project, directory=".venv", *, bootstrap=True, timeout=30):
+def managed_environment(project, directory=".venv", *, bootstrap=False, timeout=30):
     """Select and verify the exact project environment, never a cached fallback.
 
     Existing project environments are reused. Missing ones are created at the
@@ -406,7 +417,103 @@ def retain_poetry_tool(python, project, env):
     ensure_shared_poetry(project, bootstrap=False)
 
 
+# Shared setup policy (kept identical in each independently usable checkout).
+def environment_arguments(parser):
+    parser.add_argument('--bootstrap-poetry', action='store_true',
+                        help='Allow installation of shared Poetry tooling when unavailable.')
+    parser.add_argument('--bootstrap-timeout', type=int, default=30,
+                        help='Poetry bootstrap network timeout in seconds (default: %(default)s).')
+
+
+def ensure_lock_current(project, poetry, env):
+    project = Path(project)
+    check = [*poetry, 'check', '--lock']
+    if (project / 'poetry.lock').is_file():
+        result = subprocess.run(check, cwd=project, env=env, check=False,
+                                capture_output=True, text=True)
+        if result.returncode == 0:
+            print('poetry.lock is current.', flush=True)
+            return
+    print('poetry.lock is missing or stale; regenerating through Poetry.', flush=True)
+    run([*poetry, 'lock'], project, env)
+    run(check, project, env)
+
+
+EDITABLE_COMMAND_REFRESH = r"""
+from pathlib import Path
+import sys
+from cleo.io.null_io import NullIO
+from poetry.factory import Factory
+from poetry.masonry.builders.editable import EditableBuilder
+from poetry.utils.env import VirtualEnv
+project, target = map(lambda value: Path(value).resolve(), sys.argv[1:3])
+environment = VirtualEnv(target)
+if environment.path.resolve() != target:
+    raise SystemExit('Poetry selected a different environment during command repair.')
+package = Factory().create_poetry(project)
+if not package.is_package_mode or package.package.build_script:
+    raise SystemExit('Command repair requires a standard editable Poetry package.')
+EditableBuilder(package, environment, NullIO()).build()
+"""
+
+
+def refresh_console_scripts(project, python, poetry, env):
+    """Repair stale editable command metadata with pinned Poetry, never pip install."""
+    project = Path(project).resolve()
+    declaration = tomllib.loads((project / 'pyproject.toml').read_text(encoding='utf-8-sig'))
+    candidates = [project]
+    for entry in declaration.get('tool', {}).get('poetry', {}).get('dependencies', {}).values():
+        if isinstance(entry, dict) and entry.get('develop') is True and 'path' in entry:
+            candidates.append((project / entry['path']).resolve())
+    for candidate in candidates:
+        manifest = candidate / 'pyproject.toml'
+        if not manifest.is_file():
+            continue
+        package = tomllib.loads(manifest.read_text(encoding='utf-8-sig'))
+        scripts = package.get('project', {}).get('scripts', {})
+        if not scripts:
+            continue
+        name = package['project']['name']
+        probe = ('from importlib.metadata import distribution; import json,sys; '
+                 'd=distribution(sys.argv[1]); '
+                 'print(json.dumps({e.name:e.value for e in d.entry_points if e.group=="console_scripts"}))')
+        result = subprocess.run([str(python), '-I', '-c', probe, name], cwd=project,
+                                env=env, capture_output=True, text=True, check=False)
+        try:
+            installed = json.loads(result.stdout) if result.returncode == 0 else {}
+        except ValueError:
+            installed = {}
+        missing = any(installed.get(key) != value or not shutil.which(key, path=str(python.parent))
+                      for key, value in scripts.items())
+        if missing:
+            print(f'Refreshing editable command registration through Poetry: {name}', flush=True)
+            run([poetry[0], '-c', EDITABLE_COMMAND_REFRESH, str(candidate), str(python.parent.parent)],
+                project, env)
+        for command in scripts:
+            if not shutil.which(command, path=str(python.parent)):
+                raise RuntimeError(f'Missing command in project .venv: {command}. Rerun setup.')
+            # Validate the installed distribution rather than a PYTHONPATH fallback.
+            run([str(python), '-I', '-c', probe, name], project, env)
+
+
+def sync_project(project, python, poetry, env, *, groups=()):
+    """Synchronize the declared lock without rewriting dependency declarations."""
+    ensure_lock_current(project, poetry, env)
+    secure_locked_certifi(poetry, project, env)
+    run(secure_pip_command(python), project, env)
+    command = [*poetry, 'sync']
+    if groups:
+        command.extend(['--with', ','.join(groups)])
+    run(command, project, env)
+    refresh_console_scripts(project, python, poetry, env)
+    run([str(python), '-m', 'pip', 'check'], project, env)
+
+
 # Project-specific setup.
+import argparse
+import logging
+import shlex
+
 import argparse
 from pathlib import Path
 import sys
@@ -419,16 +526,12 @@ def main(argv=None):
     actions.add_argument("--build", action="store_true", help="Build the site with strict MkDocs checks after installation.")
     actions.add_argument("--serve", action="store_true", help="Start a local preview after installation.")
     parser.add_argument("--dev-addr", default="127.0.0.1:8000", help="Preview address, used with --serve (default: %(default)s).")
+    environment_arguments(parser)
     args = parser.parse_args(argv)
     if sys.version_info[:2] != (3, 12):
         parser.error("Run setup with Python 3.12.")
-    with managed_environment(PROJECT_ROOT) as (python, poetry, env):
-        retain_poetry_tool(python, PROJECT_ROOT, env)
-        secure_locked_certifi(poetry, PROJECT_ROOT, env)
-        for command in (["lock"], ["check", "--lock"], ["install"]):
-            run([*poetry, *command], PROJECT_ROOT, env)
-            if command[0] == "lock":
-                secure_locked_certifi(poetry, PROJECT_ROOT, env)
+    with managed_environment(PROJECT_ROOT, bootstrap=args.bootstrap_poetry, timeout=max(args.bootstrap_timeout, 1)) as (python, poetry, env):
+        sync_project(PROJECT_ROOT, python, poetry, env)
         if args.build:
             run([*poetry, "run", "mkdocs", "build", "--strict"], PROJECT_ROOT, env)
         elif args.serve:
