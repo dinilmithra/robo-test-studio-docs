@@ -2,16 +2,18 @@
 
 This repository owns the user documentation, existing homepage design, assets,
 MkDocs configuration and GitHub Pages workflow for robo-test-studio. It contains no
-implementation package or private technical documentation. Public API reference
-pages describe how to use published libraries; implementation source is hidden.
+implementation package or private technical documentation. Public pages describe user workflows and supported features; implementation
+source and API inventories remain in private technical documentation.
 
 ## Local setup
 
 Use Python 3.12. Run `python tools/setup.py --help` to see all options.
-`python tools/setup.py --build` creates the Poetry environment, installs documentation
+`python tools/setup.py --bootstrap-poetry --build` creates the Poetry environment, installs documentation
 dependencies and builds with strict checks. `python tools/setup.py --serve` starts
 a local preview; optionally set `--dev-addr 127.0.0.1:8001`.
-Poetry installs provider packages from PyPI, without private source checkouts.
+Poetry installs the declared documentation dependencies without private source checkouts.
+Use `--bootstrap-poetry` on first setup when the pinned tooling is unavailable;
+later runs may omit it.
 Commit the generated `poetry.lock` after the first successful dependency resolution.
 
 ## Publish

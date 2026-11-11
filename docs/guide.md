@@ -1,48 +1,38 @@
-# Robo Appian Recorder
+# Record and review a workflow
 
-A new library for capturing Appian interactions and translating them into reviewed
-semantic operations. No implementation from the former Studio recorder is reused.
+Start with a short scenario and an explicit expected business result. Complete
+login while capture is paused, then select Start capture. Pause again before
+performing actions that should not belong to the test.
 
-Dependency direction: `core-recorder -> robo-test-studio -> robo-appian-recorder -> robo-appian`.
+## Review the captured steps
 
-Public contract:
+Check component names, field values, action order and expected results. A captured
+click is not proof that the requested transaction succeeded. Review every blocked
+mapping before replay and approval; do not remove a check just to make a run pass.
 
-- `translate(event, sequence)` returns a semantic step and optional data binding.
-- `validate(document, approved=False)` reports unsupported targets and missing checks.
-- `fingerprint(document)` identifies a definition independently of its approval stamp.
-- `replay(page, document, data, timeout=90, report=None)` executes public `robo-appian`
-  component calls. It requires an approved definition and all bound data columns.
+Use labeled controls where possible. Repeated names need a unique dialog or table
+context. Table actions need a named table, a unique business row value and a named
+column. Ambiguous tables remain blocked for review. See [recorder features](api.md).
 
-Only the recording adapter (`browser.py`, `capture.js`) uses raw browser APIs.
-Regression replay uses public `robo-appian` APIs; consumer tests never import Playwright.
-Each recording launches a separate, non-persistent context. Regression inherits the
-consumer's function-scoped Appian fixture; credentials and sessions are not shared.
+## Reloads and navigation
 
-## Recording
+Capture is installed in each new document. After a reload or navigation, interact
+with the newly rendered controls. Recording observes interactions; it is not a
+complete recording of browser Back, Refresh or arbitrary address-bar actions.
+Confirm that replay reaches the same page through the recorded workflow.
 
-Studio launches the worker with an explicit consumer output location. In its browser,
-complete login while capture is paused, then click **Start capture**. Pause before
-logout or other operations outside the scenario. Use **Pick visible check** to record
-an explicit expected component. Stop from Studio to flush the active field and save.
+When an action opens another tab, recording identifies actions in that tab
+separately. Replay waits for the corresponding new tab and can return to the
+original tab for later actions. Keep tab-opening actions inside the captured
+scenario. Manually opened tabs and tabs opened during paused login need review;
+replay must be able to reproduce how the required tab was opened.
 
-The initial adapter supports labeled text/date inputs, checkbox/radio selection,
-Appian dropdown option events, named buttons/links/tabs and explicit visible checks.
-Date replay immediately blurs after fill. Inputs are parameterized rather than
-embedded as Python literals.
+## Save and generate
 
-## Deliberate limits
+Stop recording to flush the active field, then save and replay the draft. Approval
+requires a successful replay of the current definition and selected data.
+Generate Code creates a pytest adapter for that approved revision. It does not
+produce a second independent implementation of the recorded workflow.
 
-This is a new implementation requiring validation on representative Appian screens.
-Complex picker search/result flows, calendar navigation, nested menus, keyboard-only
-submissions, ARIA-only controls, uploads, cross-frame/popup workflows and ambiguous
-labels are not automatically reconstructed. They require a verified mapping or
-extension before approval. Grid actions are blocked until explicit semantic grid,
-row-key and column mappings are supplied. No nth(), generated ID or raw selector
-fallback is used in saved tests.
-
-A recording is not a video or full replay of every browser event. Assertions must
-be selected or added by the user. Password/secret values are excluded. Do not record
-login credentials or authentication tokens as business data.
-
-MCP and LLM access are not required. An optional future MCP adapter can delegate to
-`robo-appian`; it should not own Appian execution logic.
+Unsupported controls, embedded frames and complex picker or keyboard workflows
+need a verified extension. Representative live Appian validation is still required.
