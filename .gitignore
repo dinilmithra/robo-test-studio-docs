@@ -6,3 +6,6 @@ __pycache__/
 
 # Ignore all virtual-environment names starting with .venv
 .venv*
+
+# Local VS Code settings
+.vscode/
